@@ -20,7 +20,9 @@ type FileToTail struct {
 type Conf struct {
 	FilesToTail        []FileToTail
 	StdOutPrefixFormat string
+	StdOutSuppression  bool
 	StdErrPrefixFormat string
+	StdErrSuppression  bool
 	CommonPrefixFormat string
 	Command            string
 	CommandArgs        []string
@@ -55,19 +57,21 @@ func main() {
 	logger.Log(fmt.Sprintf("starting %s version %v. max procs:%v", os.Args[0], version, runtime.GOMAXPROCS(0)))
 
 	cmd := exec.Command(conf.Command, conf.CommandArgs...)
-	cmd.Stdin = os.Stdin
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
+	if !conf.StdOutSuppression {
+		cmd.Stdin = os.Stdin
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			panic(err)
+		}
+		go logFromPipe(logger, stdout, conf.StdOutPrefixFormat)
 	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		panic(err)
+	if !conf.StdErrSuppression {
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			panic(err)
+		}
+		go logFromPipe(logger, stderr, conf.StdErrPrefixFormat)
 	}
-
-	go logFromPipe(logger, stdout, conf.StdOutPrefixFormat)
-	go logFromPipe(logger, stderr, conf.StdErrPrefixFormat)
 
 	for _, file := range conf.FilesToTail {
 		go logFromFile(logger, file)

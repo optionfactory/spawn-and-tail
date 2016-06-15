@@ -39,10 +39,12 @@ func (self *FilesToTail) Set(value string) error {
 
 func ParseConf() Conf {
 	var files FilesToTail
-	flag.Var(&files, "f", "Files")
-	outPrefixFormat := flag.String("out", "[out] ", "Stdout prefix format string")
-	errPrefixFormat := flag.String("err", "[err] ", "Stderr prefix format string")
-	commonPrefix := flag.String("p", "", "Common prefix")
+	flag.Var(&files, "file", "File. can be repeated multiple times")
+	commonPrefix := flag.String("prefix", "", "Common prefix. Defaults to command name")
+	outPrefixFormat := flag.String("prefix-stdout", "[out] ", "Stdout prefix format string")
+	errPrefixFormat := flag.String("prefix-stderr", "[err] ", "Stderr prefix format string")
+	outSuppression := flag.Bool("suppress-stdout", false, "Standard output suppression")
+	errSuppression := flag.Bool("suppress-stderr", false, "Standard error suppression")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) == 0 {
@@ -57,7 +59,9 @@ func ParseConf() Conf {
 	return Conf{
 		FilesToTail:        files,
 		StdOutPrefixFormat: *outPrefixFormat,
+		StdOutSuppression:  *outSuppression,
 		StdErrPrefixFormat: *errPrefixFormat,
+		StdErrSuppression:  *errSuppression,
 		CommonPrefixFormat: *commonPrefix,
 		Command:            args[0],
 		CommandArgs:        args[1:],
